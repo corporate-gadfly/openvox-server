@@ -25,6 +25,7 @@
 (defprotocol MetricsService
   (get-metrics-registry [this server-id])
   (get-server-id [this])
+  (get-otel-meter-provider [this])
   (update-registry-settings [this server-id settings]))
 
 (defprotocol CaService
@@ -72,6 +73,7 @@
             []
             (get-metrics-registry [_ _] {})
             (get-server-id [_] "test-server")
+            (get-otel-meter-provider [_] nil)
             (update-registry-settings [_ _ _] nil))
    (service CaService
             []

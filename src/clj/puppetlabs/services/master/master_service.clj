@@ -102,7 +102,7 @@
   [[:WebroutingService add-ring-handler get-route]
    [:PuppetServerConfigService get-config]
    [:RequestHandlerService handle-request]
-   [:MetricsService get-metrics-registry get-server-id update-registry-settings]
+   [:MetricsService get-metrics-registry get-server-id update-registry-settings get-otel-meter-provider]
    [:CaService initialize-master-ssl! retrieve-ca-cert! retrieve-ca-crl! get-auth-handler]
    [:JRubyPuppetService]
    [:AuthorizationService wrap-with-authorization-check]
@@ -158,8 +158,13 @@
                        registry
                        metrics-server-id
                        route-metadata)
+         otel-meter-provider (get-otel-meter-provider)
+         otel-histogram (http-metrics/create-otel-http-meter
+                         otel-meter-provider
+                         "puppetlabs.services.master")
          http-client-metric-ids-for-status (atom master-core/puppet-server-http-client-metrics-for-status)
          ring-handler (-> comidi-handler
+                          (http-metrics/wrap-with-otel-metrics otel-histogram)
                           (http-metrics/wrap-with-request-metrics http-metrics)
                           (comidi/wrap-with-route-metadata routes))
          hostcrl (get-in config [:puppetserver :hostcrl])]
@@ -205,6 +210,7 @@
       (partial master-core/v1-status http-metrics http-client-metric-ids-for-status registry))
      (-> context
          (assoc :http-metrics http-metrics)
+         (assoc :otel-histogram otel-histogram)
          (assoc :http-client-metric-ids-for-status http-client-metric-ids-for-status))))
   (start
     [this context]

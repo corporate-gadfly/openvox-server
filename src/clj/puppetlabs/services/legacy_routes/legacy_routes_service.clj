@@ -29,6 +29,9 @@
           master-metrics (-> master-service
                              tk-services/service-context
                              :http-metrics)
+          master-otel-histogram (-> master-service
+                                    tk-services/service-context
+                                    :otel-histogram)
           master-route-config (master-core/get-master-route-config
                                 master-ns
                                 config)
@@ -54,6 +57,8 @@
                                              master-route-handler
                                              (get-auth-handler)
                                              puppet-version)
+                                            (http-metrics/wrap-with-otel-metrics
+                                             master-otel-histogram)
                                             (http-metrics/wrap-with-request-metrics
                                              master-metrics)
                                             (legacy-routes-core/add-root-path-to-route-id
